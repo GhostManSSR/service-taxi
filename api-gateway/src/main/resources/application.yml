@@ -1,0 +1,42 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: user-docs
+          uri: http://localhost:8081
+          predicates:
+            - Path=/user/v3/api-docs
+          filters:
+            - RewritePath=/user/(?<segment>.*), /${segment}
+
+        - id: trip-docs
+          uri: http://localhost:8082
+          predicates:
+            - Path=/trip/v3/api-docs
+          filters:
+            - RewritePath=/trip/(?<segment>.*), /${segment}
+
+        - id: notification-docs
+          uri: http://localhost:8083
+          predicates:
+            - Path=/notification/v3/api-docs
+          filters:
+            - RewritePath=/notification/(?<segment>.*), /${segment}
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    config-url: /v3/api-docs/swagger-config
+    urls:
+      - name: user-service
+        url: /user/v3/api-docs
+      - name: trip-service
+        url: /trip/v3/api-docs
+      - name: notification-service
+        url: /notification/v3/api-docs
