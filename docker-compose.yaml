@@ -1,20 +1,68 @@
-version: '3.8'
+version: '3.9'
 
 services:
-  postgres:
-    image: postgres:15
 
-  redis:
-    image: redis
+  postgres:
+    image: postgres:18
+    container_name: taxi-postgres
+    environment:
+      POSTGRES_DB: taxi
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Segnal96
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
   rabbitmq:
     image: rabbitmq:3-management
+    container_name: taxi-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  redis:
+    image: redis:7
+    container_name: taxi-redis
+    ports:
+      - "6379:6379"
 
   user-service:
     build: ./user-service
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
 
   trip-service:
     build: ./trip-service
+    container_name: trip-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - postgres
+      - rabbitmq
+      - user-service
 
   notification-service:
     build: ./notification-service
+    container_name: notification-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - user-service
+      - trip-service
+      - notification-service
+
+volumes:
+  pgdata:
