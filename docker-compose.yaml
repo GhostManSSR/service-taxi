@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+
+  redis:
+    image: redis
+
+  rabbitmq:
+    image: rabbitmq:3-management
+
+  user-service:
+    build: ./user-service
+
+  trip-service:
+    build: ./trip-service
+
+  notification-service:
+    build: ./notification-service
