@@ -1,0 +1,14 @@
+server:
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/taxi
+    username: postgres
+    password: Segnal96
+
+  jpa:
+    hibernate:
+      default_schema: user_service
+      ddl-auto: update
+    show-sql: true
