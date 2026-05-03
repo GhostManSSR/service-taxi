@@ -3,7 +3,7 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/taxi
+    url: jdbc:postgresql://postgres:5432/taxi
     username: postgres
     password: Segnal96
 
@@ -12,7 +12,11 @@ spring:
       ddl-auto: update
 
   rabbitmq:
-    host: localhost
+    host: rabbitmq
     port: 5672
     username: guest
     password: guest
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs

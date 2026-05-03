@@ -3,11 +3,11 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/taxi
+    url: jdbc:postgresql://postgres:5432/taxi
     username: postgres
     password: Segnal96
   rabbitmq:
-    host: localhost
+    host: rabbitmq
     port: 5672
     username: guest
     password: guest
@@ -15,8 +15,23 @@ spring:
       simple:
         acknowledge-mode: auto
 
+  data:
+    redis:
+      host: redis
+      port: 6379
+      timeout: 2000ms
+
+    rest:
+      template:
+        read-timeout: 5000ms
+        connect-timeout: 5000ms
+
   jpa:
     hibernate:
       default_schema: user_service
       ddl-auto: update
     show-sql: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs

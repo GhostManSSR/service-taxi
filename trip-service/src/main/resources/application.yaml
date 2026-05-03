@@ -1,12 +1,18 @@
 server:
   port: 8082
+  error:
+    include-message: always
+
+api:
+  locationiq:
+    key: "pk.686a63ec3b89ebff8d98b22c8e7ccd1a"
 
 spring:
   application:
     name: trip-service
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/taxi
+    url: jdbc:postgresql://postgres:5432/taxi
     username: postgres
     password: Segnal96
 
@@ -16,7 +22,7 @@ spring:
     show-sql: true
 
   rabbitmq:
-    host: localhost
+    host: rabbitmq
     port: 5672
     username: guest
     password: guest
@@ -25,7 +31,7 @@ spring:
 
   data:
     redis:
-      host: localhost
+      host: redis
       port: 6379
       timeout: 2000ms
 
@@ -39,3 +45,7 @@ logging:
     org.springframework.transaction: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
