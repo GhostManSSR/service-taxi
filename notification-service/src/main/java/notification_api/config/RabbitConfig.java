@@ -51,7 +51,7 @@ public class RabbitConfig {
         return BindingBuilder
                 .bind(queue)
                 .to(exchange)
-                .with("trip.*");
+                .with("trip.#");
     }
 }
 

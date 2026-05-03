@@ -11,24 +11,46 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitConfig {
 
-    // ===== EXCHANGE =====
     public static final String USER_EXCHANGE = "user.exchange";
 
-    // ===== QUEUE =====
     public static final String DRIVER_STATUS_QUEUE = "driver.status.queue";
+    public static final String DRIVER_RATING_QUEUE = "driver.rating.queue";
 
-    // ===== EXCHANGE =====
     @Bean
-    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
-            ConnectionFactory connectionFactory) {
+    public TopicExchange userExchange() {
+        return new TopicExchange(USER_EXCHANGE);
+    }
 
-        SimpleRabbitListenerContainerFactory factory =
-                new SimpleRabbitListenerContainerFactory();
+    @Bean
+    public Queue driverStatusQueue() {
+        return new Queue(DRIVER_STATUS_QUEUE, true);
+    }
 
-        factory.setConnectionFactory(connectionFactory);
-        factory.setMessageConverter(new JacksonJsonMessageConverter());
+    @Bean
+    public Queue driverRatingQueue() {
+        return new Queue(DRIVER_RATING_QUEUE, true);
+    }
 
-        return factory;
+    @Bean
+    public Binding driverStatusBinding(
+            Queue driverStatusQueue,
+            TopicExchange userExchange
+    ) {
+        return BindingBuilder
+                .bind(driverStatusQueue)
+                .to(userExchange)
+                .with("driver.status.update");
+    }
+
+    @Bean
+    public Binding driverRatingBinding(
+            Queue driverRatingQueue,
+            TopicExchange userExchange
+    ) {
+        return BindingBuilder
+                .bind(driverRatingQueue)
+                .to(userExchange)
+                .with("driver.rating");
     }
 
     @Bean
@@ -37,24 +59,15 @@ public class RabbitConfig {
     }
 
     @Bean
-    public TopicExchange userExchange() {
-        return new TopicExchange(USER_EXCHANGE);
-    }
+    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
+            ConnectionFactory connectionFactory
+    ) {
+        SimpleRabbitListenerContainerFactory factory =
+                new SimpleRabbitListenerContainerFactory();
 
-    // ===== QUEUE =====
+        factory.setConnectionFactory(connectionFactory);
+        factory.setMessageConverter(jacksonMessageConverter());
 
-    @Bean
-    public Queue driverStatusQueue() {
-        return new Queue(DRIVER_STATUS_QUEUE, true);
-    }
-
-    // ===== BINDING =====
-
-    @Bean
-    public Binding driverStatusBinding(Queue driverStatusQueue, TopicExchange userExchange) {
-        return BindingBuilder
-                .bind(driverStatusQueue)
-                .to(userExchange)
-                .with("driver.status.update");
+        return factory;
     }
 }
