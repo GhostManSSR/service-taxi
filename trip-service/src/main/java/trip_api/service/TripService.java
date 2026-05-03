@@ -1,16 +1,17 @@
 package trip_api.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import trip_api.client.UserClient;
-import trip_api.dto.CreateTripRequest;
-import trip_api.dto.PriceResult;
-import trip_api.dto.TripEvent;
+import trip_api.dto.*;
 import trip_api.entity.DistanceResult;
 import trip_api.entity.Rates;
 import trip_api.entity.Trip;
@@ -21,8 +22,11 @@ import user_api.dto.DriverResponse;
 import user_api.dto.DriverStatusEvent;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 
 import static reactor.netty.http.HttpConnectionLiveness.log;
 import static user_api.entity.DriverStatus.AVAILABLE;
@@ -40,17 +44,16 @@ public class TripService {
     private final RedisTemplate<String, Object> redisTemplate;
     private static final String DRIVER_CACHE_KEY = "available_driver";
     private static final String TRIP_EXCHANGE = "trip.exchange";
+    private static final String DRIVER_STATUS_KEY = "driver:status:";
     private static final String CACHE_DRIVERS = "available_drivers";
-
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Transactional()
     public Trip create(CreateTripRequest request) {
         log.info("Creating trip for passenger: {}", request.getPassengerId());
 
-        // 1. Проверка пассажира
         userClient.checkPassenger(request.getPassengerId());
 
-        // 2. Получение водителя
         DriverResponse driver = getDriver();
         log.info("Assigned driver: {}", driver.getId());
 
@@ -60,7 +63,6 @@ public class TripService {
                 request.getDestination()
         );
 
-        // 3. Создание Trip
         Trip trip = Trip.builder()
                 .passengerId(request.getPassengerId())
                 .driverId(driver.getId())
@@ -80,7 +82,6 @@ public class TripService {
 
         sendTripEvent(savedTrip, "trip.created");
 
-        rabbitTemplate.convertAndSend(TRIP_EXCHANGE, "trip.created", savedTrip.getId());
         CorrelationData correlationData = new CorrelationData(
                 "driver-" + driver.getId()
         );
@@ -96,6 +97,10 @@ public class TripService {
         return savedTrip;
     }
 
+    public List<Trip> getAll(){
+        return repository.findAll();
+    }
+
     private void sendTripEvent(Trip trip, String routingKey) {
 
         TripEvent event = new TripEvent(
@@ -105,17 +110,19 @@ public class TripService {
                 trip.getOrigin(),
                 trip.getDestination(),
                 trip.getPrice(),
+                trip.getRating(),
                 trip.getDistanceKm(),
                 trip.getDurationMin(),
                 trip.getStatus().name()
         );
 
         rabbitTemplate.convertAndSend(
-                "trip.exchange",
+                TRIP_EXCHANGE,
                 routingKey,
                 event
         );
     }
+
 
     public Trip get(Long id) {
         return repository.findById(id)
@@ -189,20 +196,108 @@ public class TripService {
     }
 
     private DriverResponse getDriver() {
+        return userClient.assignDriver();
+    }
 
-        DriverResponse cached =
-                (DriverResponse) redisTemplate.opsForValue().get(DRIVER_CACHE_KEY);
+    public TripStatsResponse getDailyStats(LocalDate date) {
 
-        if (cached != null) {
-            return cached;
+        LocalDateTime start = date.atStartOfDay();
+        LocalDateTime end = date.atTime(LocalTime.MAX);
+
+        List<Trip> trips = repository.findTripsByDay(start, end);
+
+        long count = trips.size();
+
+        double avgPrice = trips.stream()
+                .mapToDouble(Trip::getPrice)
+                .average()
+                .orElse(0.0);
+
+        return new TripStatsResponse(count, Math.round(avgPrice * 100.0) / 100.0);
+    }
+
+    @Transactional
+    public Trip rateTrip(Long tripId, RateTripRequest request) {
+
+        Trip trip = get(tripId);
+
+        if (trip.getStatus() != TripStatus.COMPLETED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Trip must be completed before rating"
+            );
         }
 
-        DriverResponse driver = userClient.assignDriver();
+        if (trip.getRating() != null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Trip already rated"
+            );
+        }
 
-        redisTemplate.opsForValue().set(DRIVER_CACHE_KEY, driver);
+        trip.setRating(request.getRating());
+        trip.setUpdatedAt(LocalDateTime.now());
 
-        return driver;
+        Trip saved = repository.save(trip);
+
+        sendTripEvent(saved, "trip.rate.changed");
+
+        rabbitTemplate.convertAndSend(
+                "user.exchange",
+                "driver.rating",
+                new DriverRatingEvent(
+                        trip.getDriverId(),
+                        request.getRating()
+                )
+        );
+
+        return saved;
     }
+
+
+
+//    private DriverResponse getDriver() {
+//
+//        DriverResponse driver;
+//
+//        int attempts = 0;
+//        int maxAttempts = 10;
+//
+//        do {
+//            // DriverResponse cached =
+//            //        (DriverResponse) redisTemplate.opsForValue().get(DRIVER_CACHE_KEY);
+//
+//            DriverResponse cached = null;
+//
+//            Object obj = redisTemplate.opsForValue().get(DRIVER_CACHE_KEY);
+//
+//            if (obj != null) {
+//                cached = mapper.convertValue(obj, DriverResponse.class);
+//            }
+//
+//            driver = (cached != null) ? cached : userClient.assignDriver();
+//
+//            String statusKey = DRIVER_STATUS_KEY + driver.getId();
+//            String status = (String) redisTemplate.opsForValue().get(statusKey);
+//
+//            if (status == null || status.equals("AVAILABLE")) {
+//
+//                redisTemplate.opsForValue().set(DRIVER_CACHE_KEY, driver);
+//                return driver;
+//            }
+//
+//            log.warn("Driver {} is BUSY, retrying...", driver.getId());
+//
+//            attempts++;
+//
+//        } while (attempts < maxAttempts);
+//
+//        throw new ResponseStatusException(
+//                HttpStatus.CONFLICT,
+//                "No available drivers at the moment"
+//        );
+//    }
+
 
     private DriverResponse getDriverFromCache() {
         return (DriverResponse) redisTemplate.opsForValue().get(CACHE_DRIVERS);

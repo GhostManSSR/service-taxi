@@ -26,8 +26,6 @@ public interface DriverRepository extends JpaRepository<Driver, Long> {
 
     List<Driver> findByStatus(DriverStatus status);
 
-//    List<Driver> findAll();
-
     boolean existsById(Long id);
 
     Page<Driver> findAllByStatus(DriverStatus status, Pageable pageable);

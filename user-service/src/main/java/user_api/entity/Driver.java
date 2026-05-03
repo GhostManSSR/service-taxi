@@ -18,6 +18,9 @@ public class Driver {
     private String email;
     private String phone;
 
+    private Double rating;
+    private Integer ratingCount;
+
     private String licenseNumber;
 
     @Enumerated(EnumType.STRING)

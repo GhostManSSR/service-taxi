@@ -8,11 +8,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import trip_api.dto.CreateTripRequest;
+import trip_api.dto.RateTripRequest;
 import trip_api.dto.TripResponse;
+import trip_api.dto.TripStatsResponse;
+import trip_api.entity.Trip;
 import trip_api.entity.TripStatus;
 import trip_api.mapper.TripMapper;
 import trip_api.service.TripService;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -53,6 +57,12 @@ public class TripController {
         return result;
     }
 
+    @GetMapping
+    @Operation(summary = "Получить все поездки")
+    public List<TripResponse> list(){
+        return mapper.toDto(service.getAll());
+    }
+
     @GetMapping("/health")
     @Operation(summary = "Health check", description = "Статус сервиса")
     public Map<String, String> health() {
@@ -63,7 +73,7 @@ public class TripController {
         );
     }
 
-    @GetMapping
+    @GetMapping("/passenger")
     @Operation(summary = "Поездки пассажира")
     public List<TripResponse> getByPassenger(
             @Parameter(description = "ID пассажира", example = "1")
@@ -78,6 +88,24 @@ public class TripController {
 
         log.info("Found {} trips for passenger {}", result.size(), passengerId);
         return result;
+    }
+
+    @PatchMapping("/{id}/rate")
+    public Trip rateTrip(
+            @PathVariable Long id,
+            @RequestBody @Valid RateTripRequest request
+    ) {
+        return service.rateTrip(id, request);
+    }
+
+    @GetMapping("/stats/daily")
+    @Operation(summary = "Статистика поездок за день")
+    public TripStatsResponse getDailyStats(
+            @RequestParam String date
+    ) {
+        log.info("GET /trips/stats/daily?date={}", date);
+
+        return service.getDailyStats(LocalDate.parse(date));
     }
 
     @PatchMapping("/{id}/status/{status}")

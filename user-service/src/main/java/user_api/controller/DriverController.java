@@ -6,9 +6,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import user_api.dto.CreateDriverRequest;
-import user_api.dto.DriverResponse;
-import user_api.dto.UpdateDriverRequest;
+import user_api.dto.*;
+import user_api.entity.Driver;
 import user_api.entity.DriverStatus;
 import user_api.mapper.DriverMapper;
 import user_api.service.DriverService;
@@ -33,6 +32,18 @@ public class DriverController {
             CreateDriverRequest request
     ) {
         return mapper.toDto(service.create(request));
+    }
+
+    @GetMapping("/{id}/rating")
+    public DriverRatingResponse getDriverRating(@PathVariable Long id) {
+
+        Driver driver = service.get(id);
+
+        return new DriverRatingResponse(
+                driver.getId(),
+                driver.getRating() == null ? 0.0 : driver.getRating(),
+                driver.getRatingCount() == null ? 0 : driver.getRatingCount()
+        );
     }
 
     @Operation(summary = "Получить водителя по ID")

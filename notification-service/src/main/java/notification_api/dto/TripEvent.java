@@ -16,6 +16,8 @@ public class TripEvent implements Serializable {
     private Double distanceKm;
     private Double durationMin;
 
+    private Integer rating;
+
     private Double price;
     private String status;
 }
