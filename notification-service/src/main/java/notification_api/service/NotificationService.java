@@ -28,7 +28,8 @@ public class NotificationService {
                         " → " + event.getDestination() +
                         " | ₽" + event.getPrice() +
                         " dist: " + event.getDistanceKm() +
-                        " time: " + event.getDurationMin()
+                        " time: " + event.getDurationMin() +
+                        " rating: " + event.getRating()
         );
 
         task.setStatus(TaskStatus.PENDING);

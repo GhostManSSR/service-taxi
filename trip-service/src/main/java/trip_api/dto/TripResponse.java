@@ -18,4 +18,5 @@ public class TripResponse {
     private Double durationMin;
     private String destination;
     private Double price;
+    private Integer rating;
 }
