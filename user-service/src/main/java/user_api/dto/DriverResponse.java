@@ -2,13 +2,21 @@ package user_api.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import user_api.entity.DriverStatus;
 
+import java.io.Serializable;
+
 @Data
+@Builder
+@NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "Ответ с информацией о водителе")
-public class DriverResponse {
+public class DriverResponse implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Schema(description = "ID водителя", example = "1")
     private Long id;

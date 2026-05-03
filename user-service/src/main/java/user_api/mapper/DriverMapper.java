@@ -4,6 +4,9 @@ import org.springframework.stereotype.Component;
 import user_api.dto.DriverResponse;
 import user_api.entity.Driver;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Component
 public class DriverMapper {
 
@@ -13,5 +16,11 @@ public class DriverMapper {
                 driver.getName(),
                 driver.getStatus()
         );
+    }
+
+    public List<DriverResponse> toDto(List<Driver> drivers) {
+        return drivers.stream()
+                .map(this::toDto)
+                .toList();
     }
 }

@@ -1,8 +1,12 @@
 package user_api.entity;
 
-public enum DriverStatus {
+import java.io.Serializable;
+
+public enum DriverStatus implements Serializable {
     AVAILABLE,
     BUSY,
     OFFLINE,
-    INACTIVE
+    INACTIVE;
+
+    private static final long serialVersionUID = 1L;
 }

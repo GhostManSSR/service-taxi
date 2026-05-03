@@ -16,16 +16,26 @@ spring:
     show-sql: true
 
   rabbitmq:
-    host: rabbitmq
+    host: localhost
     port: 5672
     username: guest
     password: guest
+    publisher-confirm-type: correlated
+    publisher-returns: true
 
   data:
     redis:
-      host: redis
+      host: localhost
       port: 6379
+      timeout: 2000ms
+
+    rest:
+      template:
+        read-timeout: 5000ms
+        connect-timeout: 5000ms
 
 logging:
   level:
-    org.springframework: INFO
+    org.springframework.transaction: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

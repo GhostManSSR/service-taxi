@@ -1,6 +1,7 @@
 package notification_api.service;
 
 import lombok.RequiredArgsConstructor;
+import notification_api.dto.TripEvent;
 import notification_api.entity.NotificationTask;
 import notification_api.entity.TaskStatus;
 import notification_api.repository.NotificationRepository;
@@ -14,12 +15,22 @@ public class NotificationService {
 
     private final NotificationRepository repository;
 
-    public void createNotificationForTrip(Long tripId) {
+    public void createNotification(TripEvent event) {
 
         NotificationTask task = new NotificationTask();
-        task.setTripId(tripId);
-        task.setRecipientType("SYSTEM");
-        task.setMessage("Trip updated: " + tripId);
+        task.setTripId(event.getTripId());
+        task.setRecipientType("PASSENGER");
+        task.setRecipientId(event.getPassengerId());
+
+        task.setMessage(
+                "Trip " + event.getStatus() +
+                        " | " + event.getOrigin() +
+                        " → " + event.getDestination() +
+                        " | ₽" + event.getPrice() +
+                        " dist: " + event.getDistanceKm() +
+                        " time: " + event.getDurationMin()
+        );
+
         task.setStatus(TaskStatus.PENDING);
         task.setAttempts(0);
         task.setCreatedAt(LocalDateTime.now());

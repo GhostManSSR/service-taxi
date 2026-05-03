@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/notifications")
@@ -27,5 +28,11 @@ public class NotificationController {
                 .stream()
                 .filter(n -> n.getTripId().equals(tripId))
                 .toList();
+    }
+
+    @GetMapping("/health")
+    @Operation(summary = "Health check сервиса", description = "Проверка готовности сервиса")
+    public Map<String, String> health() {
+        return Map.of("status", "OK", "service", "notification-service");
     }
 }

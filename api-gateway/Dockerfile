@@ -1,4 +1,4 @@
-FROM gradle:9.4.1-jdk21-corretto AS build
+FROM gradle:8.14.4-jdk21-corretto AS build
 WORKDIR /app
 
 COPY . .
@@ -10,5 +10,5 @@ WORKDIR /app
 
 COPY --from=build /app/api-gateway/build/libs/*.jar app.jar
 
-EXPOSE 8082
+EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

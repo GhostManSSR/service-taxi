@@ -14,6 +14,8 @@ public class TripMapper {
                 trip.getDriverId(),
                 trip.getStatus().name(),
                 trip.getOrigin(),
+                trip.getDistanceKm(),
+                trip.getDurationMin(),
                 trip.getDestination(),
                 trip.getPrice()
         );

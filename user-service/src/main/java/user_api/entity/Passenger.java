@@ -19,5 +19,7 @@ public class Passenger {
     private String phone;
 
     private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
 }
 

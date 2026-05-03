@@ -5,10 +5,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import user_api.entity.DriverStatus;
 
+import java.io.Serializable;
+
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class DriverStatusEvent {
+@AllArgsConstructor
+public class DriverStatusEvent implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private Long driverId;
     private DriverStatus status;
 }

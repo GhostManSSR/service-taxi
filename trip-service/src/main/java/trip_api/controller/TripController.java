@@ -1,7 +1,9 @@
 package trip_api.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +14,7 @@ import trip_api.mapper.TripMapper;
 import trip_api.service.TripService;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/trips")
@@ -25,51 +28,82 @@ public class TripController {
 
     @PostMapping
     @Operation(summary = "Создать поездку")
-    public TripResponse create(@RequestBody CreateTripRequest request) {
-        log.info("POST /trips - create trip request: {}", request);
+    public TripResponse create(
+            @RequestBody @Valid
+            @Parameter(description = "Данные поездки")
+            CreateTripRequest request
+    ) {
+        log.info("POST /trips - passengerId: {}", request.getPassengerId());
 
-        var result = mapper.toDto(service.create(request));
+        TripResponse result = mapper.toDto(service.create(request));
+        log.info("Trip created: id={}, driverId={}",
+                result.getId(), result.getDriverId());
 
-        log.info("Trip created successfully: {}", result);
         return result;
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Получить поездку по id")
-    public TripResponse get(@PathVariable Long id) {
-        log.info("GET /trips/{} - fetch trip", id);
-
-        var result = mapper.toDto(service.get(id));
-
-        log.info("Trip fetched: {}", result);
+    @Operation(summary = "Получить поездку по ID")
+    public TripResponse get(
+            @Parameter(description = "ID поездки", example = "1")
+            @PathVariable Long id
+    ) {
+        log.debug("GET /trips/{} ", id);
+        TripResponse result = mapper.toDto(service.get(id));
         return result;
     }
 
-    @GetMapping
-    @Operation(summary = "Получить поездки пассажира")
-    public List<TripResponse> getByPassenger(@RequestParam Long passengerId) {
-        log.info("GET /trips?passengerId={} - fetch trips", passengerId);
+    @GetMapping("/health")
+    @Operation(summary = "Health check", description = "Статус сервиса")
+    public Map<String, String> health() {
+        return Map.of(
+                "status", "UP",
+                "service", "trip-service",
+                "timestamp", java.time.Instant.now().toString()
+        );
+    }
 
-        var result = service.getByPassenger(passengerId)
+    @GetMapping
+    @Operation(summary = "Поездки пассажира")
+    public List<TripResponse> getByPassenger(
+            @Parameter(description = "ID пассажира", example = "1")
+            @RequestParam Long passengerId
+    ) {
+        log.debug("GET /trips?passengerId={}", passengerId);
+
+        List<TripResponse> result = service.getByPassenger(passengerId)
                 .stream()
                 .map(mapper::toDto)
                 .toList();
 
-        log.info("Found {} trips for passengerId={}", result.size(), passengerId);
+        log.info("Found {} trips for passenger {}", result.size(), passengerId);
         return result;
     }
 
-    @PatchMapping("/{id}")
+    @PatchMapping("/{id}/status/{status}")
     @Operation(summary = "Обновить статус поездки")
     public TripResponse updateStatus(
+            @Parameter(description = "ID поездки", example = "1")
             @PathVariable Long id,
-            @RequestParam TripStatus status
+
+            @Parameter(description = "Новый статус", example = "COMPLETED")
+            @PathVariable TripStatus status
     ) {
-        log.info("PATCH /trips/{} - update status to {}", id, status);
+        log.info("PATCH /trips/{}/status/{} ", id, status);
 
-        var result = mapper.toDto(service.updateStatus(id, status));
+        TripResponse result = mapper.toDto(service.updateStatus(id, status));
+        log.info("Trip {} status → {}", id, status);
 
-        log.info("Trip updated: id={}, new status={}", id, status);
         return result;
+    }
+
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Удаление поездки")
+    public void delete(
+            @Parameter(description = "ID поездки", example = "1")
+            @PathVariable Long id
+    ){
+        service.delete(id);
     }
 }

@@ -24,5 +24,7 @@ public class Driver {
     private DriverStatus status;
 
     private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
 }
 

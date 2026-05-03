@@ -14,6 +14,8 @@ public class TripResponse {
     private Long driverId;
     private String status;
     private String origin;
+    private Double distanceKm;
+    private Double durationMin;
     private String destination;
     private Double price;
 }
